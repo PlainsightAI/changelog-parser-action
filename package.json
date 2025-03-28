@@ -28,7 +28,7 @@
     "ci": "npm run lint && npm run coverage && npm run build && npm run package"
   },
   "dependencies": {
-    "@actions/core": "^1.2.6"
+    "@actions/core": "^1.9.1"
   },
   "devDependencies": {
     "@types/jest": "^26.0.15",
