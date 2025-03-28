@@ -195,3 +195,21 @@ test('should parse and sort 100+ changelog entries without performance degradati
   const entry = await action.run();
   expect(entry?.version).toBe("v1.0.0.150-dev");
 });
+
+test('should parse version with date', async () => {
+  await writeChangelog([
+    "## v1.2.3 - 2024-01-01",
+    "Entry with date"
+  ]);
+  const entry = await action.run();
+  expect(entry?.date).toBe("2024-01-01");
+});
+
+test('should fallback to default changelog filenames', async () => {
+  await writeChangelog([
+    "## v1.2.3",
+    "Default fallback"
+  ], "changelog");
+  const entry = await action.run();
+  expect(entry?.version).toBe("v1.2.3");
+});

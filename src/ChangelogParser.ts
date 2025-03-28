@@ -56,12 +56,13 @@ export class ChangelogParser {
         date: undefined,
         description
       };
-    }    
+    }
   
-    // Match: v1.2.3 or v1.2.3.456-dev|rc|int
-    const versionMatch = header.match(/^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:\.([0-9]+)-((?:dev|rc|int)))?$/);
-    if (versionMatch) {
-      const [ , major, minor, patch, build, suffix ] = versionMatch;
+    // Match version with optional date:
+    // e.g. "v1.2.3 - 2024-03-11"
+    const headerMatch = header.match(/^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:\.([0-9]+)-((?:dev|rc|int)))?(?:\s*-\s*(\d{4}-\d{2}-\d{2}))?$/);
+    if (headerMatch) {
+      const [ , major, minor, patch, build, suffix, date ] = headerMatch;
       const isProd = !suffix;
       const version = isProd
         ? `v${major}.${minor}.${patch}`
@@ -75,12 +76,13 @@ export class ChangelogParser {
         buildNumber: build,
         suffix,
         status: isProd ? 'release' : 'prerelease',
-        date: undefined,
+        date,
         description
       };
     }
   
     throw new Error("Could not parse CHANGELOG entry:\n" + entry);
   }
+  
   
 }

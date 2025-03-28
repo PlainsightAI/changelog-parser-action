@@ -219,3 +219,54 @@ test('should support [unreleased] entry with no body', () => {
     description: ""
   });
 });
+
+test('should parse prod version with date', () => {
+  const changelog = ChangelogParser.parseChangelog([
+    "## v1.2.3 - 2024-01-01",
+    "Some release notes"
+  ].join("\n"));
+
+  expect(changelog.getEntries()[0]).toMatchObject({
+    version: "v1.2.3",
+    versionMajor: "1",
+    versionMinor: "2",
+    versionPatch: "3",
+    buildNumber: undefined,
+    suffix: undefined,
+    status: "release",
+    date: "2024-01-01",
+    description: "Some release notes"
+  });
+});
+
+test('should parse non-prod version with date', () => {
+  const changelog = ChangelogParser.parseChangelog([
+    "## v1.2.3.456-dev - 2024-01-02",
+    "Dev version description"
+  ].join("\n"));
+
+  expect(changelog.getEntries()[0]).toMatchObject({
+    version: "v1.2.3.456-dev",
+    versionMajor: "1",
+    versionMinor: "2",
+    versionPatch: "3",
+    buildNumber: "456",
+    suffix: "dev",
+    status: "prerelease",
+    date: "2024-01-02",
+    description: "Dev version description"
+  });
+});
+
+test('should ignore extra whitespace around date', () => {
+  const changelog = ChangelogParser.parseChangelog([
+    "## v1.0.0.1-int   -   2024-03-28",
+    "Internal release"
+  ].join("\n"));
+
+  expect(changelog.getEntries()[0]).toMatchObject({
+    version: "v1.0.0.1-int",
+    status: "prerelease",
+    date: "2024-03-28"
+  });
+});
