@@ -72,3 +72,42 @@ test('should return specific non-prod entry', async () => {
     description: '### Fixed\n- Minor production bug'
   });
 });
+
+test('should allow multiple entries with same core version', async () => {
+  const changelog = `
+    ## v1.2.3
+    Stable
+
+    ## v1.2.3.1-dev
+    Should be older
+  `;
+  await fs.writeFile(path.join(tmpdir, "CHANGELOG.md"), changelog.trim(), "utf8");
+  const entry = await action.run();
+  expect(entry?.version).toBe("v1.2.3");
+});
+
+test('should correctly identify latest version as v1.2.3.1-int over v1.2.3', async () => {
+  const changelog = `
+    ## v1.2.3.1-int
+    Internal
+
+    ## v1.2.3
+    Stable
+  `;
+  await fs.writeFile(path.join(tmpdir, "CHANGELOG.md"), changelog.trim(), "utf8");
+  const entry = await action.run();
+  expect(entry?.version).toBe("v1.2.3.1-int");
+});
+
+test('should return latest prod version when multiple prod versions are listed', async () => {
+  const changelog = `
+    ## v2.0.0
+    Final
+
+    ## v1.9.9
+    Previous
+  `;
+  await fs.writeFile(path.join(tmpdir, "CHANGELOG.md"), changelog.trim(), "utf8");
+  const entry = await action.run();
+  expect(entry?.version).toBe("v2.0.0");
+});

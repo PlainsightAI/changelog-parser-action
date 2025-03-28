@@ -105,3 +105,93 @@ test('should support parsing [unreleased] explicitly', async () => {
   const entry = await action.run("unreleased");
   expect(entry?.version).toBe("unreleased");
 });
+
+test('should parse CHANGELOG in lowercase file (changelog.md)', async () => {
+  await writeChangelog([
+    "## v1.2.3",
+    "Some changelog text"
+  ], "changelog.md");
+
+  const entry = await action.run(undefined, "changelog.md");
+  expect(entry?.version).toBe("v1.2.3");
+});
+
+
+test('should parse CHANGELOG with Windows-style line endings (\\r\\n)', async () => {
+  const content = "## v1.2.3\r\nSome entry\r\n## v1.0.0\r\nOlder entry";
+  const filePath = path.join(tmpdir, "CHANGELOG.md");
+  await fs.writeFile(filePath, content, 'utf8');
+  const entry = await action.run();
+  expect(entry?.version).toBe("v1.2.3");
+});
+
+test('should handle changelog with only [unreleased] and no releases', async () => {
+  await writeChangelog([
+    "## [unreleased]",
+    "Initial planning"
+  ]);
+  const entry = await action.run("unreleased");
+  expect(entry?.version).toBe("unreleased");
+});
+
+test('should skip link references when parsing (footnotes at bottom)', async () => {
+  await writeChangelog([
+    "## v1.2.3",
+    "Some content",
+    "",
+    "[1.2.3]: http://example.com"
+  ]);
+  const entry = await action.run();
+  expect(entry?.version).toBe("v1.2.3");
+});
+
+test('should handle custom changelog path with nested folder', async () => {
+  const relativePath = path.join("nested", "CHANGELOG.md");
+  const fullPath = path.join(tmpdir, relativePath);
+
+  await fs.mkdir(path.dirname(fullPath), { recursive: true });
+  await fs.writeFile(fullPath, [
+    "## v1.2.3",
+    "Nested changelog"
+  ].join("\n"), "utf8");
+
+  const entry = await action.run(undefined, relativePath); // not fullPath!
+  expect(entry?.version).toBe("v1.2.3");
+});
+
+
+test('should parse changelog where entries are separated by multiple newlines', async () => {
+  await writeChangelog([
+    "## v1.2.3",
+    "One",
+    "",
+    "",
+    "## v1.2.2",
+    "Two"
+  ]);
+  const entry = await action.run();
+  expect(entry?.version).toBe("v1.2.3");
+});
+
+test('should ignore trailing whitespace and empty lines in changelog', async () => {
+  await writeChangelog([
+    "   ",
+    "## v1.2.3   ",
+    "   Line with trailing spaces   ",
+    "",
+    "## v1.0.0",
+    "Older entry"
+  ]);
+  const entry = await action.run();
+  expect(entry?.version).toBe("v1.2.3");
+});
+
+test('should parse and sort 100+ changelog entries without performance degradation', async () => {
+  const lines = ["## [unreleased]"];
+  for (let i = 150; i >= 0; i--) {
+    lines.push(`## v1.0.0.${i}-dev`, `Entry ${i}`);
+  }
+  await writeChangelog(lines);
+  const entry = await action.run();
+  expect(entry?.version).toBe("v1.0.0.150-dev");
+});

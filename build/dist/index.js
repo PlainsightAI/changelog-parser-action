@@ -46,6 +46,27 @@ exports.Action = Action;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Changelog = void 0;
+function isCoreVersionNewer(a, b) {
+    var _a, _b, _c, _d, _e, _f;
+    const va = [
+        parseInt((_a = a.versionMajor) !== null && _a !== void 0 ? _a : "0", 10),
+        parseInt((_b = a.versionMinor) !== null && _b !== void 0 ? _b : "0", 10),
+        parseInt((_c = a.versionPatch) !== null && _c !== void 0 ? _c : "0", 10)
+    ];
+    const vb = [
+        parseInt((_d = b.versionMajor) !== null && _d !== void 0 ? _d : "0", 10),
+        parseInt((_e = b.versionMinor) !== null && _e !== void 0 ? _e : "0", 10),
+        parseInt((_f = b.versionPatch) !== null && _f !== void 0 ? _f : "0", 10)
+    ];
+    for (let i = 0; i < 3; i++) {
+        if (va[i] > vb[i])
+            return true;
+        if (va[i] < vb[i])
+            return false;
+    }
+    // same core version — allowed
+    return false;
+}
 class Changelog {
     constructor(entries) {
         this.entries = entries;
@@ -59,7 +80,17 @@ class Changelog {
         return entry;
     }
     getLatestVersion() {
-        return this.getReleaseEntries()[0];
+        const entries = this.entries.filter(e => e.version !== "unreleased");
+        if (entries.length === 0)
+            return undefined;
+        for (let i = 0; i < entries.length - 1; i++) {
+            const current = entries[i];
+            const next = entries[i + 1];
+            if (isCoreVersionNewer(next, current)) {
+                throw new Error(`Invalid changelog: version "${next.version}" must be older than or equal to "${current.version}"`);
+            }
+        }
+        return entries[0];
     }
     getReleasedVersionsCount() {
         return this.getReleaseEntries().length;
@@ -120,31 +151,35 @@ class ChangelogParser {
             .join("\n");
     }
     static parseEntry(entry) {
-        var _a;
         const lines = entry.split("\n").map(line => line.trim());
         const header = lines.shift() || "";
         const description = lines.join("\n");
-        const realesedHeaderMatch = header.match(ChangelogParser.realesedVersionRegex);
-        if (realesedHeaderMatch != null) {
-            const version = realesedHeaderMatch[1];
-            const versionMajor = realesedHeaderMatch[2];
-            const versionMinor = realesedHeaderMatch[3];
-            const versionPatch = realesedHeaderMatch[4];
-            const versionSuffix = (_a = realesedHeaderMatch[5]) !== null && _a !== void 0 ? _a : '';
-            const date = realesedHeaderMatch[6];
-            const status = (versionSuffix === null || versionSuffix === void 0 ? void 0 : versionSuffix.startsWith('-')) === true
-                ? 'prerelease'
-                : 'release';
-            return {
-                version: version + versionSuffix,
-                versionMajor, versionMinor, versionPatch, status, date, description
-            };
-        }
-        const unreleasedHeaderMatch = header.match(ChangelogParser.unreleasedHeaderRegex);
-        if (unreleasedHeaderMatch != null) {
+        // Handle "unreleased"
+        const unreleasedMatch = header.match(/^\[\s*unreleased\s*\]$/i);
+        if (unreleasedMatch) {
             return {
                 version: 'unreleased',
                 status: 'unreleased',
+                date: undefined,
+                description
+            };
+        }
+        // Match: v1.2.3 or v1.2.3.456-dev|rc|int
+        const versionMatch = header.match(/^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:\.([0-9]+)-((?:dev|rc|int)))?$/);
+        if (versionMatch) {
+            const [, major, minor, patch, build, suffix] = versionMatch;
+            const isProd = !suffix;
+            const version = isProd
+                ? `v${major}.${minor}.${patch}`
+                : `v${major}.${minor}.${patch}.${build}-${suffix}`;
+            return {
+                version,
+                versionMajor: major,
+                versionMinor: minor,
+                versionPatch: patch,
+                buildNumber: build,
+                suffix,
+                status: isProd ? 'release' : 'prerelease',
                 date: undefined,
                 description
             };
@@ -154,8 +189,6 @@ class ChangelogParser {
 }
 exports.ChangelogParser = ChangelogParser;
 // https://regexr.com/5fp7a
-ChangelogParser.realesedVersionRegex = /^\[? *(([0-9]+)\.([0-9]+)\.([0-9]+))((?:-+.)[0-9A-Za-z-.+_]+)?(?: *\])?(?: *\( *[^)]* *\))?(?: +- +([0-9-]+)?)?/;
-ChangelogParser.unreleasedHeaderRegex = /^\[? *unreleased *\]?(?: *\( *[^)]* *\))?/i;
 ChangelogParser.linkLabelRegex = /^\[ *[^\]]+ *\]:.+/;
 
 
