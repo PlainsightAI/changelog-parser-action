@@ -1,0 +1,32 @@
+name: 'Changelog Parser'
+description: 'Parses changelog file'
+branding:
+  icon: 'clock'
+  color: 'blue'
+inputs:
+  path:
+    description: 'Path to the changelog file. By default standard changelog locations are used.'
+    required: false
+    default: ''
+  version:
+    description: 'Version of the changelog entry. By default the last released version is used.'
+    required: false
+    default: ''
+outputs:
+  version:
+    description: 'Version from the changelog entry'
+  versionMajor:
+    description: 'The major version part'
+  versionMinor:
+    description: 'The minor version part'
+  versionPatch:
+    description: 'The patch version part'
+  date:
+    description: 'Release date from the changelog entry'
+  status:
+    description: 'Status from the changelog entry. Possibly one of the following: prerelease, release, unreleased'
+  description:
+    description: 'Description from the changelog entry'
+runs:
+  using: 'node12'
+  main: 'build/dist/index.js'
