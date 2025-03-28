@@ -164,10 +164,11 @@ class ChangelogParser {
                 description
             };
         }
-        // Match: v1.2.3 or v1.2.3.456-dev|rc|int
-        const versionMatch = header.match(/^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:\.([0-9]+)-((?:dev|rc|int)))?$/);
-        if (versionMatch) {
-            const [, major, minor, patch, build, suffix] = versionMatch;
+        // Match version with optional date:
+        // e.g. "v1.2.3 - 2024-03-11"
+        const headerMatch = header.match(/^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:\.([0-9]+)-((?:dev|rc|int)))?(?:\s*-\s*(\d{4}-\d{2}-\d{2}))?$/);
+        if (headerMatch) {
+            const [, major, minor, patch, build, suffix, date] = headerMatch;
             const isProd = !suffix;
             const version = isProd
                 ? `v${major}.${minor}.${patch}`
@@ -180,7 +181,7 @@ class ChangelogParser {
                 buildNumber: build,
                 suffix,
                 status: isProd ? 'release' : 'prerelease',
-                date: undefined,
+                date,
                 description
             };
         }
@@ -314,7 +315,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__webpack_require__(186));
 const Action_1 = __webpack_require__(4);
 function run() {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
     return __awaiter(this, void 0, void 0, function* () {
         const path = core.getInput('path') || undefined;
         const version = core.getInput('version') || undefined;
@@ -332,9 +333,11 @@ function run() {
         core.setOutput('versionMajor', (_j = entry === null || entry === void 0 ? void 0 : entry.versionMajor) !== null && _j !== void 0 ? _j : "");
         core.setOutput('versionMinor', (_k = entry === null || entry === void 0 ? void 0 : entry.versionMinor) !== null && _k !== void 0 ? _k : "");
         core.setOutput('versionPatch', (_l = entry === null || entry === void 0 ? void 0 : entry.versionPatch) !== null && _l !== void 0 ? _l : "");
-        core.setOutput('date', (_m = entry === null || entry === void 0 ? void 0 : entry.date) !== null && _m !== void 0 ? _m : "");
-        core.setOutput('status', (_o = entry === null || entry === void 0 ? void 0 : entry.status) !== null && _o !== void 0 ? _o : "");
-        core.setOutput('description', (_p = entry === null || entry === void 0 ? void 0 : entry.description) !== null && _p !== void 0 ? _p : "");
+        core.setOutput("buildNumber", (_m = entry === null || entry === void 0 ? void 0 : entry.buildNumber) !== null && _m !== void 0 ? _m : "");
+        core.setOutput("suffix", (_o = entry === null || entry === void 0 ? void 0 : entry.suffix) !== null && _o !== void 0 ? _o : "");
+        core.setOutput('date', (_p = entry === null || entry === void 0 ? void 0 : entry.date) !== null && _p !== void 0 ? _p : "");
+        core.setOutput('description', (_q = entry === null || entry === void 0 ? void 0 : entry.description) !== null && _q !== void 0 ? _q : "");
+        core.setOutput("isProductionRelease", (entry === null || entry === void 0 ? void 0 : entry.buildNumber) === undefined ? "true" : "false");
     });
 }
 function main() {
