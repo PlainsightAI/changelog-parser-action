@@ -122,3 +122,25 @@ test('should return version with parsed date', async () => {
   expect(entry?.version).toBe("v1.2.3");
   expect(entry?.date).toBe("2024-01-01");
 });
+
+test('should identify prod version via output logic', async () => {
+  const changelog = `
+    ## v3.0.0
+    Production release
+  `;
+  await fs.writeFile(path.join(tmpdir, "CHANGELOG.md"), changelog.trim(), "utf8");
+  const entry = await action.run();
+  expect(entry?.buildNumber).toBeUndefined();
+  expect(entry?.suffix).toBeUndefined();
+});
+
+test('should identify non-prod version via output logic', async () => {
+  const changelog = `
+    ## v3.0.0.99-rc
+    RC release
+  `;
+  await fs.writeFile(path.join(tmpdir, "CHANGELOG.md"), changelog.trim(), "utf8");
+  const entry = await action.run();
+  expect(entry?.buildNumber).toBe("99");
+  expect(entry?.suffix).toBe("rc");
+});

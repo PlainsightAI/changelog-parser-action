@@ -270,3 +270,31 @@ test('should ignore extra whitespace around date', () => {
     date: "2024-03-28"
   });
 });
+
+test('should return true for production release in isProductionRelease logic', () => {
+  const changelog = ChangelogParser.parseChangelog([
+    "## v1.2.3",
+    "Stable release"
+  ].join("\n"));
+
+  const entry = changelog.getEntries()[0];
+  expect(entry.buildNumber).toBeUndefined();
+  expect(entry.suffix).toBeUndefined();
+  expect(entry.version).toBe("v1.2.3");
+  expect(entry.status).toBe("release"); // still checked internally
+  expect(entry.buildNumber === undefined).toBe(true); // logic for isProductionRelease
+});
+
+test('should return false for non-production release in isProductionRelease logic', () => {
+  const changelog = ChangelogParser.parseChangelog([
+    "## v1.2.3.456-dev",
+    "Dev release"
+  ].join("\n"));
+
+  const entry = changelog.getEntries()[0];
+  expect(entry.buildNumber).toBe("456");
+  expect(entry.suffix).toBe("dev");
+  expect(entry.version).toBe("v1.2.3.456-dev");
+  expect(entry.status).toBe("prerelease");
+  expect(entry.buildNumber === undefined).toBe(false); // logic for isProductionRelease
+});
