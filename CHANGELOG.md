@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.4] - 2025-03-28
+## 1.1.4 - 2025-03-28
 ### Added
 - Support for custom non-prod version format `v<major>.<minor>.<patch>.<build>-<suffix>`
 - Full semantic version parsing: `versionMajor`, `versionMinor`, `versionPatch`, `buildNumber`, `suffix`, `status`
@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Line ending normalization (`\n`, `\r\n`)
 - Support for deeply nested changelog paths and lowercase filenames
 - Footnote/link-reference skipping at the bottom of changelogs
+- **Support for optional dates in version headers** (e.g., `## v1.2.3 - 2024-03-11`)
 
 ### Changed
 - Enforced strict version ordering based on semver (top-down)
@@ -28,15 +29,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Dependency on original upstream parser logic
 
-## [1.0.2] - 2020-11-08
+## 1.0.2 - 2020-11-08
 ### Changed
 - Improved `action.yml` - prepared for the first release in Marketplace
 
-## [1.0.0] - 2020-11-08
+## 1.0.0 - 2020-11-08
 ### Added
 - Added changelog reading and parsing functionalities
 
-[Unreleased]: https://github.com/PlainsightAI/changelog-parser-action/compare/v1.1.0...HEAD
-[1.1.4]: https://github.com/PlainsightAI/changelog-parser-action/releases/tag/v1.1.0
-[1.0.2]: https://github.com/olivierlacan/keep-a-changelog/compare/v1.0.0...v1.0.2
+[Unreleased]: https://github.com/PlainsightAI/changelog-parser-action/compare/v1.1.0...HEAD  
+[1.1.4]: https://github.com/PlainsightAI/changelog-parser-action/releases/tag/v1.1.0  
+[1.0.2]: https://github.com/olivierlacan/keep-a-changelog/compare/v1.0.0...v1.0.2  
 [1.0.0]: https://github.com/olivierlacan/keep-a-changelog/releases/tag/v1.0.0
