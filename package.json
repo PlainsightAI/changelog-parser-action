@@ -1,22 +1,22 @@
 {
   "name": "changelog-parser-action",
-  "version": "1.0.0",
+  "version": "1.1.4",
   "description": "Github action that parses changelog",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/coditory/changelog-parser-action.git"
+    "url": "git+https://github.com/PlainsightAI/changelog-parser-action.git"
   },
   "keywords": [
     "actions",
     "changelog-parser",
     "changelog"
   ],
-  "author": "coditory",
+  "author": "PlainsightAI",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/coditory/changelog-parser-action/issues"
+    "url": "https://github.com/PlainsightAI/changelog-parser-action/issues"
   },
-  "homepage": "https://github.com/coditory/changelog-parser-action#readme",
+  "homepage": "https://github.com/PlainsightAI/changelog-parser-action#readme",
   "main": "build/js/main.js",
   "scripts": {
     "build": "tsc",
