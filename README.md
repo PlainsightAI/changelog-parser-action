@@ -1,164 +1,126 @@
-# Changelog Parser - GitHub Action
-[![GitHub Action Build](https://github.com/coditory/changelog-parser-action/workflows/Build/badge.svg)](https://github.com/coditory/changelog-parser-action/actions?query=workflow%3ABuild+branch%3Amaster)
-[![Coverage Status](https://coveralls.io/repos/github/coditory/changelog-parser-action/badge.svg?branch=master)](https://coveralls.io/github/coditory/changelog-parser-action?branch=master)
+# 📝 Changelog Parser Action
 
-> A [GitHub action](https://github.com/marketplace/actions/changelog-parser) that parses `CHANGELOG.md` written in [Keep a Changelog format](https://github.com/olivierlacan/keep-a-changelog).
+Parses a project's `CHANGELOG.md` and extracts version information, including support for **custom non-production version formats** and validation of changelog order.
 
-## Usage
+> 🔧 Forked and enhanced from [`coditory/changelog-parser`](https://github.com/coditory/changelog-parser-action)
 
-### Inputs
-- `path` (optional) - Path to the changelog file.
-  - By default action will look for a changelog is standard locations (`changelog.md`, `CHANGELOG.md`, ...).
-- `version` (optional) - Version of the changelog entry to parse.
-  - By default the last released version is used. If changelog has no released versions, action will return an empty entry (no error raised).
-  - When version is defined but not available in the changelog then an error is raised.
+---
 
-### Outputs
-- `version` - Version from the changelog entry. Example: `2.1.0`.
-- `versionMajor` - Major version part. Example: `2` for version `2.1.0`.
-- `versionMinor` - Minor version part. Example: `1` for version `2.1.0`.
-- `versionPatch` - Patch version part. Example: `0` for version `2.1.0`.
-- `date` - Release date from the changelog entry. Example: `2020-08-22`.
-- `status` - Status from the changelog entry. One of: (`prerelease`, `release`, `unreleased`).
-- `description` - Content from the changelog entry found.
+## ✨ Features
 
-### Example
-Typical `README.md` file:
+- ✅ Parses changelogs in [Keep a Changelog](https://keepachangelog.com) format
+- ✅ Extracts latest or specific version entry
+- ✅ Outputs full semantic version parts
+- ✅ Supports custom pre-release format: `v<major>.<minor>.<patch>.<build>-<suffix>`
+- ✅ Validates changelog version ordering (newest at top)
+- ✅ Handles `[unreleased]` section
+
+---
+
+## 🚀 Usage
+
+```yaml
+- name: Parse changelog
+  uses: PlainsightAI/changelog-parser-action@main
+  id: changelog
+  with:
+    path: CHANGELOG.md             # optional, default: autodetects
+    version: v2.0.0.456-dev        # optional, default: latest release
+```
+
+### 📤 Outputs
+
+| Output          | Description                                          |
+|-----------------|------------------------------------------------------|
+| `version`       | Full version string (e.g., `v2.0.0.456-dev`)         |
+| `versionMajor`  | Major version component                              |
+| `versionMinor`  | Minor version component                              |
+| `versionPatch`  | Patch version component                              |
+| `buildNumber`   | Optional build number (only for non-prod versions)   |
+| `suffix`        | Optional suffix (`dev`, `rc`, or `int`)              |
+| `date`          | Release date if provided                             |
+| `status`        | `release`, `prerelease`, or `unreleased`             |
+| `description`   | Contents of the changelog section                    |
+
+---
+
+## 📦 Supported Version Formats
+
+### ✅ Production versions:
+```
+v<major>.<minor>.<patch>
+```
+
+> Example: `v1.2.3`
+
+### ✅ Non-production versions:
+```
+v<major>.<minor>.<patch>.<build>-<suffix>
+```
+
+- Allowed suffixes: `dev`, `rc`, `int`
+- Example: `v1.2.3.456-dev`, `v2.0.0.1-rc`
+
+---
+
+## 🚨 Validation Rules
+
+- Changelog entries must appear in **descending semantic version order**
+- **Only `[unreleased]`** (case-insensitive, with brackets) is allowed as a non-version section
+- Multiple entries with the **same base version** (e.g., `v1.2.3` and `v1.2.3.1-rc`) are allowed
+- **Exact duplicate versions** (e.g., two `v1.2.3`) are rejected
+
+---
+
+## 🆚 Differences from Original
+
+| Feature                        | Original Coditory Action | This Fork                        |
+|-------------------------------|---------------------------|----------------------------------|
+| Custom version format         | ❌                        | ✅ `v1.2.3.456-dev` support       |
+| Strict ordering enforcement   | ❌                        | ✅ Top-down semver validation     |
+| Build + suffix parsing        | ❌                        | ✅ Extracted as `buildNumber` / `suffix` |
+| Multiple entries per base version | ❌                   | ✅ Allowed (e.g. `v1.2.3`, `v1.2.3.1-dev`) |
+| Duplicate version detection   | ✅                        | ✅ Still enforced                |
+
+---
+
+## 🧪 Example
+
+Given this changelog:
+
 ```md
-# Changelog
-Some description
+## [unreleased]
+- Upcoming features
 
-## [Unreleased]
+## v2.0.0.456-dev
 ### Added
-- Another important feature
+- Internal dev release
 
-## [0.2.0] - 2020-11-10
+## v2.0.0
+### Fixed
+- Production bug
+
+## v2.0.0.1-rc
 ### Added
-- Important feature
+- Internal dev release
 
-## [0.1.1] - 2020-10-10
-### Changed
-- Fixed small bug
-
-## [0.1.0] - 2020-09-10
+## v1.9.9.999-int
 ### Added
-- Initialized project
-
-[Unreleased]: https://github.com/coditory/changelog-parser-action/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/coditory/changelog-parser-action/compare/v0.1.1...v0.2.0
-[0.1.1]: https://github.com/coditory/changelog-parser-action/compare/v0.1.0...v0.1.1
-[0.1.0]: https://github.com/coditory/changelog-parser-action/releases/tag/v0.1.0
+- Internal test version
 ```
 
-Action executed with no inputs
+The latest release is `v2.0.0.456-dev` (because it appears before `v2.0.0`).
+
+---
+
+## 🛠 Development
+
 ```bash
-version: "0.2.0"
-versionMajor: "0"
-versionMinor: "2"
-versionPatch: "0"
-date: "2020-11-10"
-status: "release"
-description: "### Added\n- Important feature"
+npm install
+npm run build
+npm run test
 ```
 
-Action executed with input `version: 0.1.1`
-```bash
-version: "0.1.1"
-versionMajor: "0"
-versionMinor: "1"
-versionPatch: "1"
-date: "2020-10-10"
-status: "release"
-description: "### Changed\n- Fixed small bug"
-```
+---
 
-## Sample usage in actions
-
-### Trigger release process from CHANGELOG.md
-
-Release steps are triggered when:
-- it's a master branch
-- changelog has different latest version then last published tag matching `v*`
-
-This is just a sample action that uses java with gradle.
-
-```yaml
-name: Build
-
-on: [ push ]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Set up JDK 11
-        uses: actions/setup-java@v1
-        with:
-          java-version: 11
-      - name: Build with Gradle
-        run: ./gradlew build
-      - name: Get last version from tag
-        id: lasttag
-        shell: bash
-        run: echo ::set-output name=version::$(git describe --abbrev=0 --tags --match 'v[0-9]*\.[0-9]*\.[0-9]*' | cut -c2-)
-      - name: Parse Changelog Entry
-        id: changelog
-        uses: coditory/changelog-parser@v1
-      - name: Release
-        if: "github.ref == 'refs/heads/master' && steps.changelog.outputs.version != steps.lasttag.outputs.version"
-        env:
-          RELEASE_VERSION: ${{ steps.changelog.outputs.version }}
-        run: ./gradlew release
-      - name: GitHub Release
-        if: "github.ref == 'refs/heads/master' && steps.changelog.outputs.version != steps.lasttag.outputs.version"
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          body: ${{ steps.changelog.outputs.description }}
-          tag_name: ${{ steps.changelog.outputs.version }}
-          release_name: Release ${{ steps.changelog.outputs.version }}
-```
-
-### Create GitHub Release when new tag is pushed
-
-This action simply creates a [GitHub Release](https://docs.github.com/en/free-pro-team@latest/github/administering-a-repository/managing-releases-in-a-repository) on a newly pushed tag matching `v*`.
-
-```yaml
-name: Create Release
-
-on:
-  push:
-    tags:
-      - v*
-
-jobs:
-  build:
-    name: Create Release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get version from tag
-        id: lasttag
-        run: echo ::set-output name=version::${GITHUB_REF#refs/tags/v}
-        shell: bash
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Parse Changelog Entry
-        id: changelog
-        uses: coditory/changelog-parser@v1
-        with:
-          version: version: ${{ steps.lasttag.outputs.version }}
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.changelog.outputs.version }}
-          release_name: Release ${{ steps.changelog.outputs.version }}
-          body: ${{ steps.changelog.outputs.description }}
-```
+📄 Forked from [coditory/changelog-parser-action](https://github.com/coditory/changelog-parser-action) under **MIT** licence.

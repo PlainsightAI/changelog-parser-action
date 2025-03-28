@@ -2,10 +2,8 @@ import { Changelog, ChangelogEntry } from "./Changelog";
 
 export class ChangelogParser {
   // https://regexr.com/5fp7a
-  private static readonly realesedVersionRegex = /^\[? *(([0-9]+)\.([0-9]+)\.([0-9]+))((?:-+.)[0-9A-Za-z-.+_]+)?(?: *\])?(?: *\( *[^)]* *\))?(?: +- +([0-9-]+)?)?/;
-  private static readonly unreleasedHeaderRegex = /^\[? *unreleased *\]?(?: *\( *[^)]* *\))?/i;
   private static readonly linkLabelRegex = /^\[ *[^\]]+ *\]:.+/;
-
+  
   static parseChangelog(changelog: string): Changelog {
     const changelogNoIntro = ChangelogParser.removeChangelogIntro(changelog);
     const changelogNoLinks = ChangelogParser.removeLinkLabels(changelogNoIntro);
@@ -48,31 +46,41 @@ export class ChangelogParser {
     const lines = entry.split("\n").map(line => line.trim());
     const header = lines.shift() || "";
     const description = lines.join("\n");
-    const realesedHeaderMatch = header.match(ChangelogParser.realesedVersionRegex);
-    if (realesedHeaderMatch != null) {
-      const version = realesedHeaderMatch[1];
-      const versionMajor = realesedHeaderMatch[2];
-      const versionMinor = realesedHeaderMatch[3];
-      const versionPatch = realesedHeaderMatch[4];
-      const versionSuffix = realesedHeaderMatch[5] ?? '';
-      const date = realesedHeaderMatch[6];
-      const status = versionSuffix?.startsWith('-') === true
-        ? 'prerelease'
-        : 'release';
-      return {
-        version: version + versionSuffix,
-        versionMajor, versionMinor, versionPatch, status, date, description
-      };
-    }
-    const unreleasedHeaderMatch = header.match(ChangelogParser.unreleasedHeaderRegex);
-    if (unreleasedHeaderMatch != null) {
+  
+    // Handle "unreleased"
+    const unreleasedMatch = header.match(/^\[\s*unreleased\s*\]$/i);
+    if (unreleasedMatch) {
       return {
         version: 'unreleased',
         status: 'unreleased',
         date: undefined,
         description
       };
+    }    
+  
+    // Match: v1.2.3 or v1.2.3.456-dev|rc|int
+    const versionMatch = header.match(/^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:\.([0-9]+)-((?:dev|rc|int)))?$/);
+    if (versionMatch) {
+      const [ , major, minor, patch, build, suffix ] = versionMatch;
+      const isProd = !suffix;
+      const version = isProd
+        ? `v${major}.${minor}.${patch}`
+        : `v${major}.${minor}.${patch}.${build}-${suffix}`;
+  
+      return {
+        version,
+        versionMajor: major,
+        versionMinor: minor,
+        versionPatch: patch,
+        buildNumber: build,
+        suffix,
+        status: isProd ? 'release' : 'prerelease',
+        date: undefined,
+        description
+      };
     }
+  
     throw new Error("Could not parse CHANGELOG entry:\n" + entry);
   }
+  
 }
