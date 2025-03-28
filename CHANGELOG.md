@@ -38,6 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added changelog reading and parsing functionalities
 
 [Unreleased]: https://github.com/PlainsightAI/changelog-parser-action/compare/v1.1.0...HEAD  
-[1.1.4]: https://github.com/PlainsightAI/changelog-parser-action/releases/tag/v1.1.0  
-[1.0.2]: https://github.com/olivierlacan/keep-a-changelog/compare/v1.0.0...v1.0.2  
-[1.0.0]: https://github.com/olivierlacan/keep-a-changelog/releases/tag/v1.0.0
+1.1.4: https://github.com/PlainsightAI/changelog-parser-action/releases/tag/v1.1.0  
+1.0.2: https://github.com/olivierlacan/keep-a-changelog/compare/v1.0.0...v1.0.2  
+1.0.0: https://github.com/olivierlacan/keep-a-changelog/releases/tag/v1.0.0
