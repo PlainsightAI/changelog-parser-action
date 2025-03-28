@@ -28,5 +28,5 @@ outputs:
   description:
     description: 'Description from the changelog entry'
 runs:
-  using: 'node12'
+  using: 'node16'
   main: 'build/dist/index.js'
