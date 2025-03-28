@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 1.1.4 - 2025-03-28
 ### Added
 - Support for custom non-prod version format `v<major>.<minor>.<patch>.<build>-<suffix>`
-- Full semantic version parsing: `versionMajor`, `versionMinor`, `versionPatch`, `buildNumber`, `suffix`, `status`
-- `status` field supports: `release`, `prerelease`, `unreleased`
+- Full semantic version parsing: `versionMajor`, `versionMinor`, `versionPatch`, `buildNumber`, `suffix`
 - Detection of latest release regardless of prod/non-prod (based on file order, not semver)
+- Output field: `isProductionRelease` (true for `v1.2.3`, false for non-prod versions)
 - `[unreleased]` section parsing with or without body
 - Support for duplicate core versions with unique build/suffix (e.g., `v1.2.3` + `v1.2.3.1-rc`)
 - Line ending normalization (`\n`, `\r\n`)
@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rewrote core logic and tests from the ground up using TypeScript and Jest
 
 ### Removed
+- Output field: `status` (`release`, `prerelease`, `unreleased`)
 - Dependency on original upstream parser logic
 
 ## 1.0.2 - 2020-11-08
@@ -37,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added changelog reading and parsing functionalities
 
-[Unreleased]: https://github.com/PlainsightAI/changelog-parser-action/compare/v1.1.0...HEAD  
-1.1.4: https://github.com/PlainsightAI/changelog-parser-action/releases/tag/v1.1.0  
-1.0.2: https://github.com/olivierlacan/keep-a-changelog/compare/v1.0.0...v1.0.2  
-1.0.0: https://github.com/olivierlacan/keep-a-changelog/releases/tag/v1.0.0
+[Unreleased]: https://github.com/PlainsightAI/changelog-parser-action/compare/v1.1.4...HEAD  
+[1.1.4]: https://github.com/PlainsightAI/changelog-parser-action/releases/tag/v1.1.4  
+[1.0.2]: https://github.com/olivierlacan/keep-a-changelog/compare/v1.0.0...v1.0.2  
+[1.0.0]: https://github.com/olivierlacan/keep-a-changelog/releases/tag/v1.0.0

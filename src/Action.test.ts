@@ -213,3 +213,32 @@ test('should fallback to default changelog filenames', async () => {
   const entry = await action.run();
   expect(entry?.version).toBe("v1.2.3");
 });
+
+test('should return entry that is a production release', async () => {
+  await writeChangelog([
+    "## v2.0.0",
+    "Stable version"
+  ]);
+  const entry = await action.run();
+  expect(entry?.suffix).toBeUndefined();
+  expect(entry?.buildNumber).toBeUndefined();
+});
+
+test('should return entry that is NOT a production release', async () => {
+  await writeChangelog([
+    "## v2.0.0.5-rc",
+    "RC version"
+  ]);
+  const entry = await action.run();
+  expect(entry?.suffix).toBe("rc");
+  expect(entry?.buildNumber).toBe("5");
+});
+
+test('should parse [ unreleased ] with extra whitespace', async () => {
+  await writeChangelog([
+    "## [  unreleased  ]",
+    "In progress"
+  ]);
+  const entry = await action.run("unreleased");
+  expect(entry?.version).toBe("unreleased");
+});

@@ -32,18 +32,17 @@ Parses a project's `CHANGELOG.md` and extracts version information, including su
 
 ### 📤 Outputs
 
-| Output          | Description                                          |
-|-----------------|------------------------------------------------------|
-| `version`       | Full version string (e.g., `v2.0.0.456-dev`)         |
-| `versionMajor`  | Major version component                              |
-| `versionMinor`  | Minor version component                              |
-| `versionPatch`  | Patch version component                              |
-| `buildNumber`   | Optional build number (only for non-prod versions)   |
-| `suffix`        | Optional suffix (`dev`, `rc`, or `int`)              |
-| `date`          | Date parsed from the version header (e.g., ## v1.2.3 - 2024-03-11) |
-| `status`        | `release`, `prerelease`, or `unreleased`             |
-| `description`   | Contents of the changelog section                    |
-
+| Output              | Description                                                |
+|---------------------|------------------------------------------------------------|
+| `version`           | Full version string (e.g., `v2.0.0.456-dev`)               |
+| `versionMajor`      | Major version component                                    |
+| `versionMinor`      | Minor version component                                    |
+| `versionPatch`      | Patch version component                                    |
+| `buildNumber`       | Optional build number (only for non-prod versions)         |
+| `suffix`            | Optional suffix (`dev`, `rc`, or `int`)                    |
+| `date`              | Release date if provided                                   |
+| `description`       | Contents of the changelog section                          |
+| `isProductionRelease` | `"true"` if production release (`v1.2.3`), `"false"` otherwise |
 ---
 
 ## 📦 Supported Version Formats
