@@ -111,3 +111,14 @@ test('should return latest prod version when multiple prod versions are listed',
   const entry = await action.run();
   expect(entry?.version).toBe("v2.0.0");
 });
+
+test('should return version with parsed date', async () => {
+  const changelog = `
+    ## v1.2.3 - 2024-01-01
+    Includes a release date
+  `;
+  await fs.writeFile(path.join(tmpdir, "CHANGELOG.md"), changelog.trim(), "utf8");
+  const entry = await action.run();
+  expect(entry?.version).toBe("v1.2.3");
+  expect(entry?.date).toBe("2024-01-01");
+});

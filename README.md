@@ -14,6 +14,8 @@ Parses a project's `CHANGELOG.md` and extracts version information, including su
 - ✅ Supports custom pre-release format: `v<major>.<minor>.<patch>.<build>-<suffix>`
 - ✅ Validates changelog version ordering (newest at top)
 - ✅ Handles `[unreleased]` section
+- ✅ Supports optional dates in version headers (## v1.2.3 - 2024-03-15)
+
 
 ---
 
@@ -38,7 +40,7 @@ Parses a project's `CHANGELOG.md` and extracts version information, including su
 | `versionPatch`  | Patch version component                              |
 | `buildNumber`   | Optional build number (only for non-prod versions)   |
 | `suffix`        | Optional suffix (`dev`, `rc`, or `int`)              |
-| `date`          | Release date if provided                             |
+| `date`          | Date parsed from the version header (e.g., ## v1.2.3 - 2024-03-11) |
 | `status`        | `release`, `prerelease`, or `unreleased`             |
 | `description`   | Contents of the changelog section                    |
 
@@ -49,17 +51,20 @@ Parses a project's `CHANGELOG.md` and extracts version information, including su
 ### ✅ Production versions:
 ```
 v<major>.<minor>.<patch>
+v<major>.<minor>.<patch> - <date>
 ```
 
-> Example: `v1.2.3`
+> Example: `v1.2.3`, `v1.2.3 - 2024-03-15`
 
 ### ✅ Non-production versions:
 ```
 v<major>.<minor>.<patch>.<build>-<suffix>
+v<major>.<minor>.<patch>.<build>-<suffix> - <date>
 ```
 
 - Allowed suffixes: `dev`, `rc`, `int`
-- Example: `v1.2.3.456-dev`, `v2.0.0.1-rc`
+- Example: `v1.2.3.456-dev`, `v2.0.0.1-rc - 2024-02-20`
+
 
 ---
 
