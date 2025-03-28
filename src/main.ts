@@ -20,9 +20,11 @@ async function run(): Promise<void> {
   core.setOutput('versionMajor', entry?.versionMajor ?? "");
   core.setOutput('versionMinor', entry?.versionMinor ?? "");
   core.setOutput('versionPatch', entry?.versionPatch ?? "");
+  core.setOutput("buildNumber", entry?.buildNumber ?? "");
+  core.setOutput("suffix", entry?.suffix ?? "");
   core.setOutput('date', entry?.date ?? "");
-  core.setOutput('status', entry?.status ?? "");
   core.setOutput('description', entry?.description ?? "");
+  core.setOutput("isProductionRelease", entry?.buildNumber === undefined ? "true" : "false");
 }
 
 async function main(): Promise<void> {

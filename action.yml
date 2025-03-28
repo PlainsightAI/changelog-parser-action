@@ -21,12 +21,16 @@ outputs:
     description: 'The minor version part'
   versionPatch:
     description: 'The patch version part'
+  buildNumber:
+    description: 'Build number (only for non-prod versions)'
+  suffix:
+    description: 'Suffix for non-prod versions (dev, rc, int)'
   date:
     description: 'Release date from the changelog entry'
-  status:
-    description: 'Status from the changelog entry. Possibly one of the following: prerelease, release, unreleased'
   description:
     description: 'Description from the changelog entry'
+  isProductionRelease:
+    description: 'true if version is a production release (e.g. v1.2.3), false otherwise'
 runs:
   using: 'node16'
   main: 'build/dist/index.js'
