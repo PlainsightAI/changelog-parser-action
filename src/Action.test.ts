@@ -26,7 +26,7 @@ test('should throw error on missing CHANGELOG in default locations', async () =>
   try {
     await action.run();
   } catch (e) {
-    expect(e.message).toEqual("Could not find CHANGELOG file. Searched in locations: CHANGELOG.md, CHANGELOG, changelog.md, changelog");
+    expect((e as Error).message).toEqual("Could not find CHANGELOG file. Searched in locations: CHANGELOG.md, CHANGELOG, changelog.md, changelog");
   }
 });
 
@@ -35,7 +35,7 @@ test('should throw error on missing CHANGELOG in specific location', async () =>
   try {
     await action.run(undefined, "CHANGELOGGG.md");
   } catch (e) {
-    expect(e.message).toEqual("Could not find CHANGELOG file: CHANGELOGGG.md");
+    expect((e as Error).message).toEqual("Could not find CHANGELOG file: CHANGELOGGG.md");
   }
 });
 
@@ -93,7 +93,7 @@ test('should throw error if requested version not found', async () => {
   try {
     await action.run("v9.9.9");
   } catch (e) {
-    expect(e.message).toEqual("Could not find CHANGELOG entry for version: v9.9.9");
+    expect((e as Error).message).toEqual("Could not find CHANGELOG entry for version: v9.9.9");
   }
 });
 
