@@ -44,7 +44,11 @@ async function main(): Promise<void> {
   try {
     await run();
   } catch (error) {
-    core.setFailed(error.message);
+    if (error instanceof Error) {
+      core.setFailed(error.message);
+    } else {
+      core.setFailed(String(error));
+    }
   }
 }
 
