@@ -126,6 +126,7 @@ class ChangelogParser {
             .filter(entry => entry.length > 0)
             .map(entry => ChangelogParser.parseEntry(entry));
         ChangelogParser.validateUniqueVersions(entries);
+        ChangelogParser.validateNoBumpBulletsInReleasedSections(entries);
         return new Changelog_1.Changelog(entries);
     }
     static validateUniqueVersions(entries) {
@@ -137,14 +138,52 @@ class ChangelogParser {
             versions.add(entry.version);
         });
     }
+    // The cascade bump-strategy automation only writes `- Bump <pkg> to X.Y.Z`
+    // bullets into `[Unreleased]`. Their presence under a tagged release
+    // section indicates a misplaced bump — DT-145 follow-up; see also the
+    // producer-side fix at PlainsightAI/openfilter#104.
+    static validateNoBumpBulletsInReleasedSections(entries) {
+        entries.forEach(entry => {
+            if (entry.status === "unreleased")
+                return;
+            const offending = entry.description
+                .split("\n")
+                .find(line => ChangelogParser.bumpBulletRegex.test(line.trim()));
+            if (offending !== undefined) {
+                throw new Error(`Bump bullet found in released section "${entry.version}": ` +
+                    `"${offending.trim()}". Bump bullets must live under ` +
+                    `"## [Unreleased]"; the cascade bump-strategy script writes there.`);
+            }
+        });
+    }
     static removeChangelogIntro(changelog) {
         if (changelog.startsWith("## ")) {
             return changelog;
         }
         const index = changelog.indexOf('\n## ');
-        return index > 0
-            ? changelog.substring(index)
-            : "";
+        // Bullet lines in the intro almost always mean a changelog entry was
+        // appended above the first version header (FaceGuard case in DT-145).
+        // Reject early — they would otherwise be silently dropped by this
+        // function and never validated again. Scan the actual intro segment:
+        // up to the first `\n## ` when one exists, or the whole file when no
+        // version header is present at all.
+        const intro = index >= 0 ? changelog.substring(0, index) : changelog;
+        ChangelogParser.validateIntroHasNoBullets(intro);
+        return index > 0 ? changelog.substring(index) : "";
+    }
+    static validateIntroHasNoBullets(intro) {
+        const offending = [];
+        intro.split("\n").forEach(line => {
+            if (ChangelogParser.bulletLineRegex.test(line.trimStart())) {
+                offending.push(line.trim());
+            }
+        });
+        if (offending.length > 0) {
+            throw new Error(`Changelog intro (above the first "## " header) contains bullet ` +
+                `line(s) that look like misplaced changelog entries: ` +
+                offending.map(b => `"${b}"`).join(", ") +
+                `. Move them under "## [Unreleased]".`);
+        }
     }
     static removeLinkLabels(changelog) {
         return changelog.split("\n")
@@ -192,6 +231,15 @@ class ChangelogParser {
 exports.ChangelogParser = ChangelogParser;
 // https://regexr.com/5fp7a
 ChangelogParser.linkLabelRegex = /^\[ *[^\]]+ *\]:.+/;
+// Markdown bullet at the start of a (left-stripped) line — `-`, `*`, or
+// `+` followed by whitespace. Used to detect changelog entries misplaced
+// in the file intro (above the first `## ` version header).
+ChangelogParser.bulletLineRegex = /^[-*+]\s/;
+// `- Bump <pkg> to <semver>` — the mechanical bullet the cascade
+// bump-strategy automation produces. Must only appear under
+// `[Unreleased]`; finding it inside a tagged release header means the
+// bump landed in the wrong block.
+ChangelogParser.bumpBulletRegex = /^-\s+Bump\s+\S+\s+to\s+\d+(?:\.\d+)+/;
 
 
 /***/ }),

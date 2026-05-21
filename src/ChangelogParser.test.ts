@@ -298,3 +298,133 @@ test('should return false for non-production release in isProductionRelease logi
   expect(entry.status).toBe("prerelease");
   expect(entry.buildNumber === undefined).toBe(false); // logic for isProductionRelease
 });
+
+// ─────────────────── DT-145 follow-up: misplaced bump bullets ───────────────────
+// The cascade bump-strategy script (PlainsightAI/openfilter) emits
+// `- Bump <pkg> to X.Y.Z` bullets into RELEASE.md. A prior bug landed those
+// bullets either in the file intro (FaceGuard case) or inside an already-
+// tagged release section (filter-sweet-green-subject-data-aggregator #39).
+// These rules fail CI on either pattern so the gate catches mis-edits even
+// after the producer-side fix has shipped.
+
+test('should throw when bullet line appears in intro (FaceGuard pattern)', () => {
+  expect(() =>
+    ChangelogParser.parseChangelog([
+      "# Changelog",
+      "",
+      "FaceGuard release notes",
+      "- Bump openfilter to 1.0.0",
+      "",
+      "## [Unreleased]",
+      ""
+    ].join("\n"))
+  ).toThrow(/Changelog intro .* contains bullet line/);
+});
+
+test('should report multiple misplaced intro bullets', () => {
+  expect(() =>
+    ChangelogParser.parseChangelog([
+      "# Changelog",
+      "- Bump openfilter to 1.0.0",
+      "- Bump openfilter to 1.1.0",
+      "## [Unreleased]"
+    ].join("\n"))
+  ).toThrow(/"- Bump openfilter to 1.0.0".*"- Bump openfilter to 1.1.0"/);
+});
+
+test('should treat `*` and `+` bullets in intro the same as `-`', () => {
+  for (const marker of ["*", "+"]) {
+    expect(() =>
+      ChangelogParser.parseChangelog([
+        "# Changelog",
+        `${marker} stray bullet`,
+        "## [Unreleased]"
+      ].join("\n"))
+    ).toThrow(/contains bullet line/);
+  }
+});
+
+test('should allow plain-paragraph intro above the first version header', () => {
+  const changelog = ChangelogParser.parseChangelog([
+    "# Changelog",
+    "",
+    "All notable changes to this project will be documented in this file.",
+    "The format is based on Keep a Changelog.",
+    "",
+    "## [Unreleased]",
+    "Some notes"
+  ].join("\n"));
+
+  expect(changelog.getEntries().map(e => e.version)).toEqual(["unreleased"]);
+});
+
+test('should throw when bump bullet appears in a released section (SGSDA #39 pattern)', () => {
+  expect(() =>
+    ChangelogParser.parseChangelog([
+      "# Sweet Green Subject Data Aggregator filter release notes",
+      "",
+      "## v0.1.27 - 2026-04-24",
+      "",
+      "### Changed",
+      "",
+      "- Bump openfilter to 1.1.0",
+      "",
+      "### Fixed",
+      "- Restore RELEASE.md heading format"
+    ].join("\n"))
+  ).toThrow(/Bump bullet found in released section "v0.1.27".*"- Bump openfilter to 1\.1\.0"/);
+});
+
+test('should throw on bump bullet in released section even without a date', () => {
+  expect(() =>
+    ChangelogParser.parseChangelog([
+      "## v1.0.0",
+      "### Changed",
+      "- Bump openfilter to 1.1.0"
+    ].join("\n"))
+  ).toThrow(/Bump bullet found in released section "v1.0.0"/);
+});
+
+test('should allow bump bullets under [Unreleased]', () => {
+  const changelog = ChangelogParser.parseChangelog([
+    "# Changelog",
+    "",
+    "## [Unreleased]",
+    "",
+    "### Changed",
+    "",
+    "- Bump openfilter to 1.1.0",
+    "",
+    "## v0.1.27 - 2026-04-24",
+    "",
+    "### Fixed",
+    "- Restore RELEASE.md heading format"
+  ].join("\n"));
+
+  expect(changelog.getEntries().map(e => e.version)).toEqual([
+    "unreleased",
+    "v0.1.27"
+  ]);
+});
+
+test('should not fire bump-bullet rule on prose mentioning a bump', () => {
+  // "Bumped" in a narrative paragraph is not a bullet — must not trigger.
+  const changelog = ChangelogParser.parseChangelog([
+    "## v1.0.0",
+    "Bumped openfilter to 1.1.0 as part of this release.",
+    "Other notes."
+  ].join("\n"));
+
+  expect(changelog.getEntries()[0].version).toBe("v1.0.0");
+});
+
+test('should accept variant package names in the bump bullet rule', () => {
+  // The rule keys on the bullet shape, not the package name — any
+  // `- Bump <pkg> to X.Y.Z` under a released header is rejected.
+  expect(() =>
+    ChangelogParser.parseChangelog([
+      "## v1.0.0",
+      "- Bump filter-faceblur to 0.1.5"
+    ].join("\n"))
+  ).toThrow(/Bump bullet found in released section "v1.0.0".*"- Bump filter-faceblur to 0\.1\.5"/);
+});
