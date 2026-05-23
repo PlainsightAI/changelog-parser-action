@@ -254,6 +254,14 @@ class ChangelogParser {
         for (const t of tokens) {
             if (t.type !== "list")
                 continue;
+            // Skip ordered lists — same reasoning as validateNoListInIntro: the
+            // cascade rewriter only emits unordered `- Bump …` bullets, so
+            // numbered list items can't be cascade output. `bumpBulletRegex`'s
+            // `^-` anchor already filters them, but this matches the intro
+            // validator's shape and future-proofs against any broadening of
+            // the regex.
+            if (t.ordered)
+                continue;
             for (const item of t.items) {
                 const firstLine = item.raw.trim().split("\n")[0];
                 if (ChangelogParser.bumpBulletRegex.test(firstLine)) {
