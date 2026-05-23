@@ -133,6 +133,13 @@ export class ChangelogParser {
     const offending: string[] = [];
     for (const t of tokens) {
       if (t.type !== "list") continue;
+      // Skip ordered lists explicitly. The cascade rewriter only emits
+      // unordered `- Bump …` bullets, so an ordered intro list (e.g. a
+      // numbered policy or deploy-instructions block) can't be a misplaced
+      // cascade entry. `bumpBulletRegex` would already filter them out via
+      // its `^-` anchor, but guarding here makes the intent explicit and
+      // future-proofs against any broadening of the regex.
+      if ((t as Tokens.List).ordered) continue;
       for (const item of (t as Tokens.List).items) {
         // `item.raw` carries the bullet marker. Take only the first line
         // so a nested-list item or multi-line bullet stays readable in

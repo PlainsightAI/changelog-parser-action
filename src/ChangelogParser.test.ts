@@ -351,6 +351,24 @@ test('should allow a non-bump bullet list in the intro', () => {
   expect(changelog.getEntries().map(e => e.version)).toEqual(["unreleased"]);
 });
 
+test('should allow an ordered list in the intro', () => {
+  // Cascade rewriter only emits unordered `- Bump …` bullets, so a
+  // numbered intro list (deploy policy, release-process notes) can't be a
+  // misplaced cascade entry. The intro validator skips ordered lists
+  // explicitly via `(list).ordered` — this test pins that.
+  const changelog = ChangelogParser.parseChangelog([
+    "# Changelog",
+    "",
+    "1. Breaking changes require a manual release.",
+    "2. See README for deploy instructions.",
+    "",
+    "## v1.2.3",
+    "First release"
+  ].join("\n"));
+
+  expect(changelog.getEntries().map(e => e.version)).toEqual(["v1.2.3"]);
+});
+
 test('should allow plain-paragraph intro above the first version header', () => {
   const changelog = ChangelogParser.parseChangelog([
     "# Changelog",
