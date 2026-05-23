@@ -30,6 +30,14 @@ Parses a project's `CHANGELOG.md` and extracts version information, including su
     version: v2.0.0.456-dev        # optional, default: latest release
 ```
 
+### 📥 Inputs
+
+| Input                       | Default | Description                                                                                       |
+|-----------------------------|---------|---------------------------------------------------------------------------------------------------|
+| `path`                      | `""`    | Path to the changelog file. By default, standard locations are searched (`CHANGELOG.md` etc.).   |
+| `version`                   | `""`    | Specific version to extract. Default: latest released.                                            |
+| `skip-bump-bullet-checks`   | `false` | **Escape hatch — discouraged.** See [Misplaced-bump validation](#-misplaced-bump-validation).    |
+
 ### 📤 Outputs
 
 | Output              | Description                                                |
@@ -73,6 +81,36 @@ v<major>.<minor>.<patch>.<build>-<suffix> - <date>
 - **Only `[unreleased]`** (case-insensitive, with brackets) is allowed as a non-version section
 - Multiple entries with the **same base version** (e.g., `v1.2.3` and `v1.2.3.1-rc`) are allowed
 - **Exact duplicate versions** (e.g., two `v1.2.3`) are rejected
+- **Misplaced-bump rules** (see below)
+
+---
+
+## 🛑 Misplaced-bump validation
+
+Two rules catch the failure modes the cascade `bump-strategy.sh` script used to produce ([DT-145](https://plainsight-ai.atlassian.net/browse/DT-145)):
+
+1. **Intro:** a `- Bump <pkg> to X.Y.Z` bullet above the first `## ` header fails parsing. Bumps belong inside `## [Unreleased]`, not in the file preamble.
+2. **Released section:** the same shape under a tagged `## vX.Y.Z` header fails parsing. Bumps must live under `## [Unreleased]` until a release cuts them.
+
+Both rules are AST-driven (CommonMark via `marked`), so a bump-shaped line inside a fenced code block or HTML comment is not a false positive.
+
+### 🪤 Escape hatch — `skip-bump-bullet-checks`
+
+`skip-bump-bullet-checks: 'true'` bypasses both rules.
+
+**Strongly discouraged.** The rules exist to catch real bugs the cascade automation used to produce. Setting the flag will:
+
+- emit a workflow warning (visible in the Annotations tab) so the bypass is loud,
+- only disable the two bump-bullet rules — version-header parsing, ordering, and duplicate detection still run,
+- **not** fix the underlying RELEASE.md.
+
+Use only when you genuinely cannot edit `RELEASE.md` for this PR (e.g., a time-critical hotfix sitting on top of legacy mis-placement). The flag is intended as a temporary safety valve, not a long-term opt-out — fix the file in a follow-up and remove the flag in the next change.
+
+```yaml
+- uses: PlainsightAI/changelog-parser-action@main
+  with:
+    skip-bump-bullet-checks: 'true'  # discouraged; see above
+```
 
 ---
 

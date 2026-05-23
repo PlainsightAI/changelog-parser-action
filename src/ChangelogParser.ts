@@ -6,6 +6,16 @@ interface PendingEntry {
   descriptionTokens: Token[];
 }
 
+export interface ParseOptions {
+  // Escape hatch for the two bump-bullet validation rules (intro + released
+  // section). Default false — the rules ship strict. Setting true bypasses
+  // both checks but does NOT relax version-header parsing, ordering, or
+  // duplicate detection. Intended for surgical, time-bound use; consumers
+  // setting this should also fix the underlying RELEASE.md so the flag can
+  // come back off in the next change.
+  skipBumpBulletChecks?: boolean;
+}
+
 export class ChangelogParser {
   // `- Bump <pkg> to <semver>` — the mechanical bullet the cascade
   // bump-strategy automation produces. Must only appear under
@@ -19,7 +29,10 @@ export class ChangelogParser {
   private static readonly bumpBulletRegex =
     /^-\s+Bump\s+\S+\s+to\s+\d+(?:\.\d+)+/;
 
-  static parseChangelog(changelog: string): Changelog {
+  static parseChangelog(
+    changelog: string,
+    options: ParseOptions = {}
+  ): Changelog {
     // marked.lexer gives us a CommonMark token stream. Driving the parser
     // off the AST (not regex splits like `\n## `) keeps the layout-detection
     // honest: `- Bump ...` inside a fenced code block is a `code` token, not
@@ -53,14 +66,19 @@ export class ChangelogParser {
       }
     }
 
-    ChangelogParser.validateNoListInIntro(introTokens);
+    if (!options.skipBumpBulletChecks) {
+      ChangelogParser.validateNoListInIntro(introTokens);
+    }
 
     for (const { entry, descriptionTokens } of pending) {
       entry.description = descriptionTokens
         .map(t => t.raw)
         .join("")
         .trim();
-      if (entry.status !== "unreleased") {
+      if (
+        !options.skipBumpBulletChecks &&
+        entry.status !== "unreleased"
+      ) {
         ChangelogParser.validateNoBumpBulletsInRelease(
           descriptionTokens,
           entry.version

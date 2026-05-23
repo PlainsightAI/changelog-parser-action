@@ -23,11 +23,11 @@ class Action {
     constructor(basedir = "./") {
         this.basedir = basedir;
     }
-    run(version, path) {
+    run(version, path, options = {}) {
         return __awaiter(this, void 0, void 0, function* () {
             const changelogContent = yield new ChangelogReader_1.ChangelogReader(this.basedir)
                 .readChangelog(path);
-            const changelog = ChangelogParser_1.ChangelogParser.parseChangelog(changelogContent);
+            const changelog = ChangelogParser_1.ChangelogParser.parseChangelog(changelogContent, options);
             return version !== undefined
                 ? changelog.getByVersion(version)
                 : changelog.getLatestVersion();
@@ -118,7 +118,7 @@ exports.ChangelogParser = void 0;
 const marked_1 = __nccwpck_require__(8022);
 const Changelog_1 = __nccwpck_require__(8105);
 class ChangelogParser {
-    static parseChangelog(changelog) {
+    static parseChangelog(changelog, options = {}) {
         // marked.lexer gives us a CommonMark token stream. Driving the parser
         // off the AST (not regex splits like `\n## `) keeps the layout-detection
         // honest: `- Bump ...` inside a fenced code block is a `code` token, not
@@ -148,13 +148,16 @@ class ChangelogParser {
                 current.descriptionTokens.push(token);
             }
         }
-        ChangelogParser.validateNoListInIntro(introTokens);
+        if (!options.skipBumpBulletChecks) {
+            ChangelogParser.validateNoListInIntro(introTokens);
+        }
         for (const { entry, descriptionTokens } of pending) {
             entry.description = descriptionTokens
                 .map(t => t.raw)
                 .join("")
                 .trim();
-            if (entry.status !== "unreleased") {
+            if (!options.skipBumpBulletChecks &&
+                entry.status !== "unreleased") {
                 ChangelogParser.validateNoBumpBulletsInRelease(descriptionTokens, entry.version);
             }
         }
@@ -411,7 +414,16 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         const path = core.getInput('path') || undefined;
         const version = core.getInput('version') || undefined;
-        const entry = yield new Action_1.Action().run(version, path);
+        const skipBumpBulletChecks = core.getBooleanInput('skip-bump-bullet-checks');
+        if (skipBumpBulletChecks) {
+            // Loud-by-default: the bypass shows up in the workflow's Annotations
+            // tab so reviewers can see it even if they don't read the step log.
+            core.warning("skip-bump-bullet-checks=true — misplaced-bump validation is " +
+                "disabled. This rule exists to catch bugs the cascade bump-strategy " +
+                "script used to produce; re-enable as soon as the underlying " +
+                "RELEASE.md is fixed.");
+        }
+        const entry = yield new Action_1.Action().run(version, path, { skipBumpBulletChecks });
         const versionStr = (_a = entry === null || entry === void 0 ? void 0 : entry.version) !== null && _a !== void 0 ? _a : "";
         const major = (_b = entry === null || entry === void 0 ? void 0 : entry.versionMajor) !== null && _b !== void 0 ? _b : "";
         const minor = (_c = entry === null || entry === void 0 ? void 0 : entry.versionMinor) !== null && _c !== void 0 ? _c : "";

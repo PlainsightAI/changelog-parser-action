@@ -12,6 +12,18 @@ inputs:
     description: 'Version of the changelog entry. By default the last released version is used.'
     required: false
     default: ''
+  skip-bump-bullet-checks:
+    description: |
+      Escape hatch — set 'true' to bypass the two misplaced-bump validation rules
+      (bump bullets in the file intro / inside a tagged release section).
+      Default 'false'; the rules ship strict and exist to catch bugs the
+      cascade bump-strategy script previously produced. Setting 'true' emits a
+      workflow warning and only disables those two rules — version-header
+      parsing, ordering, and duplicate detection still run. Intended for
+      surgical, time-bound use; fix the underlying RELEASE.md and remove the
+      flag in the next change.
+    required: false
+    default: 'false'
 outputs:
   version:
     description: 'Version from the changelog entry'

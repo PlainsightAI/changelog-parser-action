@@ -4,8 +4,20 @@ import { Action } from './Action';
 async function run(): Promise<void> {
   const path = core.getInput('path') || undefined;
   const version = core.getInput('version') || undefined;
+  const skipBumpBulletChecks = core.getBooleanInput('skip-bump-bullet-checks');
 
-  const entry = await new Action().run(version, path);
+  if (skipBumpBulletChecks) {
+    // Loud-by-default: the bypass shows up in the workflow's Annotations
+    // tab so reviewers can see it even if they don't read the step log.
+    core.warning(
+      "skip-bump-bullet-checks=true — misplaced-bump validation is " +
+      "disabled. This rule exists to catch bugs the cascade bump-strategy " +
+      "script used to produce; re-enable as soon as the underlying " +
+      "RELEASE.md is fixed."
+    );
+  }
+
+  const entry = await new Action().run(version, path, { skipBumpBulletChecks });
 
   const versionStr = entry?.version ?? "";
   const major = entry?.versionMajor ?? "";

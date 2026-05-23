@@ -454,6 +454,64 @@ test('should accept variant package names in the bump bullet rule', () => {
   ).toThrow(/Bump bullet found in released section "v1.0.0".*"- Bump filter-faceblur to 0\.1\.5"/);
 });
 
+// ─────────────────── skip-bump-bullet-checks escape hatch ────────────────────
+// Both new validation rules can be bypassed via parseChangelog's
+// `skipBumpBulletChecks` option (plumbed from `skip-bump-bullet-checks`
+// action input). The bypass is loud (workflow warning) and discouraged in
+// README, but exists so a consumer with broken RELEASE.md history can
+// merge a time-critical change while fixing the file in a follow-up.
+
+test('should bypass intro rule when skipBumpBulletChecks=true', () => {
+  // Same input as the FaceGuard regression test, but with the escape
+  // hatch flipped on — parsing succeeds instead of throwing.
+  const changelog = ChangelogParser.parseChangelog(
+    [
+      "# Changelog",
+      "",
+      "FaceGuard release notes",
+      "- Bump openfilter to 1.0.0",
+      "",
+      "## [Unreleased]",
+      ""
+    ].join("\n"),
+    { skipBumpBulletChecks: true }
+  );
+  expect(changelog.getEntries().map(e => e.version)).toEqual(["unreleased"]);
+});
+
+test('should bypass released-section rule when skipBumpBulletChecks=true', () => {
+  // Same input as the SGSDA #39 regression test, but with the escape
+  // hatch on — parsing succeeds instead of throwing.
+  const changelog = ChangelogParser.parseChangelog(
+    [
+      "# Sweet Green Subject Data Aggregator filter release notes",
+      "",
+      "## v0.1.27 - 2026-04-24",
+      "",
+      "### Changed",
+      "",
+      "- Bump openfilter to 1.1.0",
+      "",
+      "### Fixed",
+      "- Restore RELEASE.md heading format"
+    ].join("\n"),
+    { skipBumpBulletChecks: true }
+  );
+  expect(changelog.getEntries()[0].version).toBe("v0.1.27");
+});
+
+test('should still enforce non-bump rules when skipBumpBulletChecks=true', () => {
+  // The escape hatch only disables the two bump-bullet rules. Version
+  // ordering, duplicate detection, and header parseability still run —
+  // otherwise the flag would be a parser-bypass blunderbuss.
+  expect(() =>
+    ChangelogParser.parseChangelog(
+      ["## v1.0.0", "## v1.0.0"].join("\n"),
+      { skipBumpBulletChecks: true }
+    )
+  ).toThrow(/Duplicated version in changelog/);
+});
+
 test('should preserve per-line interior whitespace in description (post-marked behavior pin)', () => {
   // The marked-driven parser rebuilds descriptions from token.raw and
   // trims only the joined result. The previous regex-based parser
