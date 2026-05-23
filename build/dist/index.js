@@ -205,26 +205,32 @@ class ChangelogParser {
             versions.add(entry.version);
         }
     }
-    // Bullet lines in the intro almost always mean a changelog entry was
-    // appended above the first version header (FaceGuard case in DT-145).
+    // Bump bullets above the first `## ` header almost always mean a
+    // cascade-emitted entry was appended above the first version header
+    // (FaceGuard case in DT-145). Scoped specifically to the bump-bullet
+    // shape so projects whose intros legitimately use bullet lists (feature
+    // summaries, pointers to the canonical changelog) are not affected.
     // Driving off `list` tokens — not raw-line `^[-*+]` matches — means a
-    // bullet-looking line inside a code block or HTML comment won't trip
-    // the rule.
+    // bump-shaped line inside a code block or HTML comment won't trip
+    // the rule either.
     static validateNoListInIntro(tokens) {
         const offending = [];
         for (const t of tokens) {
-            if (t.type === "list") {
-                for (const item of t.items) {
-                    // `item.raw` carries the bullet marker. Take only the first line
-                    // so a nested-list item or multi-line bullet stays readable in
-                    // the error.
-                    offending.push(item.raw.trim().split("\n")[0]);
+            if (t.type !== "list")
+                continue;
+            for (const item of t.items) {
+                // `item.raw` carries the bullet marker. Take only the first line
+                // so a nested-list item or multi-line bullet stays readable in
+                // the error.
+                const firstLine = item.raw.trim().split("\n")[0];
+                if (ChangelogParser.bumpBulletRegex.test(firstLine)) {
+                    offending.push(firstLine);
                 }
             }
         }
         if (offending.length > 0) {
-            throw new Error(`Changelog intro (above the first "## " header) contains bullet ` +
-                `line(s) that look like misplaced changelog entries: ` +
+            throw new Error(`Changelog intro (above the first "## " header) contains bump ` +
+                `bullet(s) that look like misplaced cascade output: ` +
                 offending.map(b => `"${b}"`).join(", ") +
                 `. Move them under "## [Unreleased]".`);
         }
@@ -251,8 +257,13 @@ class ChangelogParser {
 exports.ChangelogParser = ChangelogParser;
 // `- Bump <pkg> to <semver>` — the mechanical bullet the cascade
 // bump-strategy automation produces. Must only appear under
-// `[Unreleased]`; finding it inside a tagged release header means the
-// bump landed in the wrong block.
+// `[Unreleased]`; finding it inside a tagged release header (or in the
+// file preamble) means the bump landed in the wrong block.
+//
+// `-` only (not `*` or `+`) is intentional: this regex exists to catch
+// the cascade script's mechanical output, which always emits `-`. A
+// hand-typed `* Bump ...` would slip past — that's by design; the rule
+// is scoped to the automated failure mode we know about.
 ChangelogParser.bumpBulletRegex = /^-\s+Bump\s+\S+\s+to\s+\d+(?:\.\d+)+/;
 
 

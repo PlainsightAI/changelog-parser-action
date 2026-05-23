@@ -307,7 +307,7 @@ test('should return false for non-production release in isProductionRelease logi
 // These rules fail CI on either pattern so the gate catches mis-edits even
 // after the producer-side fix has shipped.
 
-test('should throw when bullet line appears in intro (FaceGuard pattern)', () => {
+test('should throw when bump bullet appears in intro (FaceGuard pattern)', () => {
   expect(() =>
     ChangelogParser.parseChangelog([
       "# Changelog",
@@ -318,7 +318,7 @@ test('should throw when bullet line appears in intro (FaceGuard pattern)', () =>
       "## [Unreleased]",
       ""
     ].join("\n"))
-  ).toThrow(/Changelog intro .* contains bullet line/);
+  ).toThrow(/Changelog intro .* contains bump bullet/);
 });
 
 test('should report multiple misplaced intro bullets', () => {
@@ -332,16 +332,23 @@ test('should report multiple misplaced intro bullets', () => {
   ).toThrow(/"- Bump openfilter to 1.0.0".*"- Bump openfilter to 1.1.0"/);
 });
 
-test('should treat `*` and `+` bullets in intro the same as `-`', () => {
-  for (const marker of ["*", "+"]) {
-    expect(() =>
-      ChangelogParser.parseChangelog([
-        "# Changelog",
-        `${marker} stray bullet`,
-        "## [Unreleased]"
-      ].join("\n"))
-    ).toThrow(/contains bullet line/);
-  }
+test('should allow a non-bump bullet list in the intro', () => {
+  // The intro rule is scoped to the cascade's bump-bullet shape so projects
+  // whose intros legitimately use bullet lists (feature summaries, pointers
+  // to the canonical changelog) are not affected. Regression in case a
+  // future change broadens the rule back to "any list".
+  const changelog = ChangelogParser.parseChangelog([
+    "# Changelog",
+    "",
+    "Highlights:",
+    "- Feature summary",
+    "- Pointer to canonical changelog",
+    "",
+    "## [Unreleased]",
+    "Some notes"
+  ].join("\n"));
+
+  expect(changelog.getEntries().map(e => e.version)).toEqual(["unreleased"]);
 });
 
 test('should allow plain-paragraph intro above the first version header', () => {
@@ -427,4 +434,26 @@ test('should accept variant package names in the bump bullet rule', () => {
       "- Bump filter-faceblur to 0.1.5"
     ].join("\n"))
   ).toThrow(/Bump bullet found in released section "v1.0.0".*"- Bump filter-faceblur to 0\.1\.5"/);
+});
+
+test('should preserve per-line interior whitespace in description (post-marked behavior pin)', () => {
+  // The marked-driven parser rebuilds descriptions from token.raw and
+  // trims only the joined result. The previous regex-based parser
+  // line-trimmed each line individually. Both shapes appear in
+  // downstream consumers (e.g. `openfilter/create-release.yaml` uses
+  // `outputs.description` directly as release-notes content). This test
+  // pins the current behavior so a future parser swap doesn't silently
+  // regress either direction.
+  const changelog = ChangelogParser.parseChangelog([
+    "## v1.0.0",
+    "### Added",
+    "- A bullet  with  internal  whitespace"
+  ].join("\n"));
+
+  const desc = changelog.getEntries()[0].description;
+  // Interior whitespace inside the bullet text round-trips verbatim.
+  expect(desc).toContain("A bullet  with  internal  whitespace");
+  // The H3 marker and bullet marker are preserved.
+  expect(desc).toContain("### Added");
+  expect(desc).toMatch(/^### Added/);
 });
