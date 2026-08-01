@@ -44,5 +44,5 @@ outputs:
   isProductionRelease:
     description: 'true if version is a production release (e.g. v1.2.3), false otherwise'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'build/dist/index.js'
